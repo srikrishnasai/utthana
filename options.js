@@ -21,6 +21,7 @@ const DEFAULTS = {
   workplace: "office",
   breakMode: "window",
   meetingDetect: true,
+  speakSteps: false,
   activities: Object.fromEntries(ACTIVITIES.map((a) => [a.id, true])),
   sessionMinutes: 5,
   dailyGoal: 30,
@@ -265,7 +266,16 @@ $("tryMove").addEventListener("click", () => chrome.runtime.sendMessage({ type: 
     customSites: Array.isArray(s.customSites) ? s.customSites : [],
     workDays: Array.isArray(s.workDays) ? s.workDays : DEFAULTS.workDays
   };
+  // Carry over settings from version 1.x, same migration as background.js's
+  // getSettings() — kept in sync here too, so Settings works even if it's
+  // somehow opened before background.js has had a chance to migrate storage.
+  if (s.moveEvery === undefined && typeof s.breakEvery === "number") {
+    settings.moveOn = s.breakEvery > 0;
+    settings.moveEvery = s.breakEvery > 0 ? s.breakEvery : DEFAULTS.moveEvery;
+  }
   if (settings.breakMode === "open") settings.breakMode = "window";
+  delete settings.breakEvery;
+  delete settings.lastBreakEvery;
 
   renderDays();
   bindTime("workStart", checkHours);
@@ -280,6 +290,7 @@ $("tryMove").addEventListener("click", () => chrome.runtime.sendMessage({ type: 
   bindRadio("workplace", "workplace", renderActivities);
   bindRadio("mode", "breakMode");
   bindCheck("meetingDetect");
+  bindCheck("speakSteps");
   bindNumber("sessionMinutes", 1, 120);
   bindNumber("dailyGoal", 5, 720);
   syncDisabled();

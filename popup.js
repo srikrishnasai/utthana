@@ -15,7 +15,7 @@ function hm(mins) {
 const timeText = (ms) => new Date(ms).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
 async function render() {
-  const { stats = {}, settings = {} } = await chrome.storage.local.get(["stats", "settings"]);
+  const { stats = {}, settings = {}, parked = null } = await chrome.storage.local.get(["stats", "settings", "parked"]);
   const status = (await chrome.runtime.sendMessage({ type: "status" }).catch(() => null)) || {};
   const live = status.live || { stretch: 0 };
   const moveEvery = settings.moveEvery || 50;
@@ -91,6 +91,13 @@ async function render() {
     `${closed} ${closed === 1 ? "tab" : "tabs"} closed at the pause screen.`;
 
   $("hours").textContent = `Work hours ${settings.workStart || "09:30"}–${settings.workEnd || "18:30"}`;
+
+  // Park This / Resume Me — a plain local note, nothing read from the page,
+  // nothing sent anywhere. Pre-filling the input on reopen is the "resume" part.
+  $("parkInput").value = parked ? parked.text : "";
+  $("parkClear").hidden = !parked;
+  $("parkedWhen").hidden = !parked;
+  if (parked) $("parkedWhen").textContent = `Parked at ${timeText(parked.createdAt)}`;
 }
 
 $("breakNow").addEventListener("click", async () => {
@@ -112,6 +119,16 @@ $("resume").addEventListener("click", async () => {
 $("openSettings").addEventListener("click", () => {
   chrome.runtime.openOptionsPage();
   window.close();
+});
+$("parkSave").addEventListener("click", async () => {
+  const text = $("parkInput").value.trim();
+  if (text) await chrome.storage.local.set({ parked: { text, createdAt: Date.now() } });
+  else await chrome.storage.local.remove("parked");
+  render();
+});
+$("parkClear").addEventListener("click", async () => {
+  await chrome.storage.local.remove("parked");
+  render();
 });
 
 render();

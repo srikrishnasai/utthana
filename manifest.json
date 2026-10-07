@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Unsit",
-  "version": "2.1.0",
-  "description": "Get up, feel better. Short breaks at the right moments in your workday, never during calls, plus a pause screen for distracting sites.",
+  "version": "2.2.0",
+  "description": "Get up, feel better. Short breaks at the right moments, never during calls, plus a pause screen for distracting sites.",
   "permissions": [
     "storage",
     "alarms",

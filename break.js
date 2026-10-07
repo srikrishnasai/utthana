@@ -8,6 +8,10 @@ const steps = activity.steps;
 
 let timer = null;
 let audioCtx = null;
+let settings = { speakSteps: false };
+chrome.storage.local.get("settings").then(({ settings: s }) => {
+  settings = { ...settings, ...(s || {}) };
+});
 
 const KICKERS = {
   timer: kind === "micro" ? "Quick micro-break" : "You've been at the screen a while",
@@ -52,12 +56,55 @@ function chime() {
 }
 
 function closeThisTab() {
+  stopSpeaking();
   chrome.tabs.getCurrent()
     .then((tab) => (tab ? chrome.tabs.remove(tab.id) : window.close()))
     .catch(() => window.close());
 }
 
+// ---------- speech (optional, on-device voice only) ----------
+// Reads steps aloud for people who'd rather not watch the screen (a walk, a
+// stretch). Chrome can fall back to a voice fetched from Google's servers when
+// no voice is installed locally — we only ever use a `localService` voice, and
+// stay silent rather than risk a network call if none is available.
+
+let localVoices = null;
+
+function refreshVoices() {
+  localVoices = window.speechSynthesis.getVoices().filter((v) => v.localService);
+}
+
+if ("speechSynthesis" in window) {
+  refreshVoices();
+  window.speechSynthesis.onvoiceschanged = refreshVoices;
+}
+
+function pickVoice() {
+  if (!localVoices || !localVoices.length) return null;
+  return localVoices.find((v) => v.lang && v.lang.startsWith("en")) || localVoices[0];
+}
+
+function speak(text) {
+  if (!settings.speakSteps || !text) return;
+  if (!("speechSynthesis" in window)) return;
+  const voice = pickVoice();
+  if (!voice) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = voice;
+    window.speechSynthesis.speak(u);
+  } catch (e) {}
+}
+
+function stopSpeaking() {
+  if ("speechSynthesis" in window) {
+    try { window.speechSynthesis.cancel(); } catch (e) {}
+  }
+}
+
 async function goToNextActivity() {
+  stopSpeaking();
   try {
     const res = await chrome.runtime.sendMessage({ type: "nextActivity", kind });
     const q = new URLSearchParams(params);
@@ -95,6 +142,7 @@ function runStep(index) {
   $("phase").textContent = step.text;
   $("hint").textContent = step.hint;
   renderStepDots(index);
+  speak(step.hint ? `${step.text}. ${step.hint}` : step.text);
 
   if (step.confirm) {
     setOrb("mid");
@@ -131,6 +179,7 @@ async function finish() {
   $("doneText").textContent = activity.done;
   show("done");
   $("back").focus();
+  speak(activity.done);
   try {
     await chrome.runtime.sendMessage({ type: "breakDone", activity: activity.id, kind });
     const { stats = {} } = await chrome.storage.local.get("stats");

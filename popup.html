@@ -36,6 +36,11 @@
     .primary:hover { background: #276A5C; }
     .ghost { background: transparent; color: #2F7D6D; border-color: #A9BDB6; }
     .ghost:hover { background: #E2E9E6; }
+    input[type="text"] {
+      width: 100%; font: inherit; font-size: 13px; padding: 9px 12px;
+      border-radius: 10px; border: 1.5px solid #BFCCC6; background: #fff; color: #1E2B33;
+    }
+    input[type="text"]:focus { outline: none; border-color: #2F7D6D; box-shadow: 0 0 0 3px rgba(47,125,109,0.2); }
     .chart { display: flex; align-items: flex-end; gap: 8px; height: 76px; }
     .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
     .col .b { width: 100%; background: #A9BDB6; border-radius: 6px 6px 2px 2px; min-height: 3px; }
@@ -72,6 +77,16 @@
       <button class="ghost" id="pause60">Pause 1h</button>
       <button class="ghost" id="pauseDay">Pause today</button>
       <button class="ghost" id="resume" hidden>Resume breaks</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Quick note</h2>
+    <p class="muted" id="parkedWhen" hidden></p>
+    <input type="text" id="parkInput" placeholder="Something to remember before you step away" maxlength="140" autocomplete="off">
+    <div class="actions" style="margin-top:8px">
+      <button class="ghost" id="parkSave">Save</button>
+      <button class="ghost" id="parkClear" hidden>Clear</button>
     </div>
   </section>
 

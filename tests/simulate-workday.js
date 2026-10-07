@@ -10,10 +10,10 @@ let winId=0;
 global.chrome={runtime:{getURL:p=>p,onInstalled:ev('inst'),onStartup:ev('start'),onMessage:ev('msg')},
  storage:{local:{get:async k=>{const o={};[].concat(k).forEach(x=>{if(x in store)o[x]=JSON.parse(JSON.stringify(store[x]))});return o},set:async o=>Object.assign(store,JSON.parse(JSON.stringify(o))),remove:async k=>{delete store[k]}},onChanged:ev('chg')},
  alarms:{onAlarm:ev('alarm'),clear(){},create(){}},notifications:{onClicked:ev('nc'),onButtonClicked:ev('nb'),create:(id,o)=>log.push(`${new Date().toTimeString().slice(0,5)} NOTIFY ${o.title}`)},
- idle:{queryState:async()=>idle}, tabs:{query:async()=>meetingTabs, update:async()=>{}},
+ idle:{queryState:async()=>idle}, tabs:{query:async()=>meetingTabs, update:async()=>{}, onActivated:ev('tabActivated')},
  permissions:{contains:async()=>true},
  scripting:{getRegisteredContentScripts:async()=>[],unregisterContentScripts:async()=>{},registerContentScripts:async()=>{}},
- windows:{get:async()=>null,getLastFocused:async()=>({left:0,top:0,width:1400,height:900,state:'normal'}),update:async()=>{},create:async o=>{log.push(`${new Date().toTimeString().slice(0,5)} WINDOW ${o.url}`);return{id:++winId}},onRemoved:ev('wr')}};
+ windows:{get:async()=>null,getLastFocused:async()=>({left:0,top:0,width:1400,height:900,state:'normal'}),update:async()=>{},create:async o=>{log.push(`${new Date().toTimeString().slice(0,5)} WINDOW ${o.url}`);return{id:++winId}},onRemoved:ev('wr'),onFocusChanged:ev('focusChanged'),WINDOW_ID_NONE:-1}};
 eval(fs.readFileSync(path.join(ROOT,'background.js'),'utf8'));
 const msg=(m)=>new Promise(r=>L.msg[0](m,{},r));
 (async()=>{

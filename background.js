@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   workplace: "office",           // "office" or "home"
   breakMode: "window",           // "window" or "notify"
   meetingDetect: true,
+  speakSteps: false,             // read steps aloud on the break page, using an on-device voice only
   activities: Object.fromEntries(ACTIVITIES.map((a) => [a.id, true])),
   // Focus Guard
   sessionMinutes: 5,
@@ -35,6 +36,17 @@ const IDLE_SECONDS = 120;        // no keyboard/mouse for 2 min = away
 const AWAY_RESET_MINUTES = 5;    // 5 min away counts as a natural break
 const SNOOZE_MINUTES = 10;
 const WINDOW_SIZE = { width: 460, height: 660 };
+const NATURAL_PAUSE_WAIT_MS = 3 * 60000; // hold a due break this long, hoping for a transition
+
+// A tab/window switch is a weak signal that someone just finished one thing and
+// is starting another — a better moment to offer a break than mid-keystroke.
+// In-memory only (not worth persisting): if the service worker restarts, we
+// simply fall back to the bounded wait below, never losing correctness.
+let lastTransitionAt = 0;
+chrome.tabs.onActivated.addListener(() => { lastTransitionAt = Date.now(); });
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (windowId !== chrome.windows.WINDOW_ID_NONE) lastTransitionAt = Date.now();
+});
 
 const MEETING_URLS = [
   "*://meet.google.com/*",
@@ -164,7 +176,8 @@ async function getLive() {
   const today = dateKey();
   if (!live || live.date !== today) {
     return { date: today, stretch: 0, sinceMicro: 0, idleRun: 0, deferred: null,
-             moveSnoozeUntil: 0, microSnoozeUntil: 0, lunchShown: false, wrapShown: false };
+             moveSnoozeUntil: 0, microSnoozeUntil: 0, lunchShown: false, wrapShown: false,
+             moveWaitSince: null, microWaitSince: null };
   }
   return live;
 }
@@ -214,6 +227,10 @@ async function inMeeting(settings) {
     const tabs = await chrome.tabs.query({ url: MEETING_URLS });
     return tabs.some((t) => {
       const url = t.url || "";
+      // Meet/Zoom URLs here are specific enough (a meeting code, or /wc//j/) that we
+      // trust the URL alone — including the pre-join lobby, which we'd rather treat as
+      // "in a call" than risk a break popping up the moment someone joins. Teams tabs stay
+      // open for chat too, so for those we also require audio as a stronger signal.
       if (/^https?:\/\/meet\.google\.com\/[a-z]{3,4}-[a-z]{4}-[a-z]{3,4}/.test(url)) return true; // in a Meet call
       if (/zoom\.us\/(wc|j)\//.test(url)) return true;                                      // Zoom web client
       if (/teams\.(microsoft|live)\.com/.test(url) && t.audible) return true;                // Teams call with sound
@@ -237,25 +254,31 @@ function breakUrl(id, extra = {}) {
 }
 
 async function openWindow(url) {
-  // Reuse the activity window if one is already open.
-  const { activityWindow } = await chrome.storage.local.get("activityWindow");
-  if (activityWindow) {
-    const existing = await chrome.windows.get(activityWindow, { populate: true }).catch(() => null);
-    if (existing) {
-      await chrome.tabs.update(existing.tabs[0].id, { url });
-      chrome.windows.update(activityWindow, { focused: true, drawAttention: true });
-      return;
+  // Never let a window-creation hiccup bubble up and abort the caller
+  // (the minute tick, in particular, must still save its live state).
+  try {
+    // Reuse the activity window if one is already open.
+    const { activityWindow } = await chrome.storage.local.get("activityWindow");
+    if (activityWindow) {
+      const existing = await chrome.windows.get(activityWindow, { populate: true }).catch(() => null);
+      if (existing && existing.tabs && existing.tabs.length) {
+        await chrome.tabs.update(existing.tabs[0].id, { url });
+        chrome.windows.update(activityWindow, { focused: true, drawAttention: true });
+        return;
+      }
     }
-  }
 
-  const base = await chrome.windows.getLastFocused({ windowTypes: ["normal"] }).catch(() => null);
-  const opts = { url, type: "popup", focused: true, ...WINDOW_SIZE };
-  if (base && base.width && base.state !== "minimized") {
-    opts.left = Math.max(0, Math.round(base.left + (base.width - WINDOW_SIZE.width) / 2));
-    opts.top = Math.max(0, Math.round(base.top + (base.height - WINDOW_SIZE.height) / 2));
+    const base = await chrome.windows.getLastFocused({ windowTypes: ["normal"] }).catch(() => null);
+    const opts = { url, type: "popup", focused: true, ...WINDOW_SIZE };
+    if (base && base.width && base.state !== "minimized") {
+      opts.left = Math.max(0, Math.round(base.left + (base.width - WINDOW_SIZE.width) / 2));
+      opts.top = Math.max(0, Math.round(base.top + (base.height - WINDOW_SIZE.height) / 2));
+    }
+    const win = await chrome.windows.create(opts);
+    await chrome.storage.local.set({ activityWindow: win.id });
+  } catch (err) {
+    console.error("openWindow error:", err);
   }
-  const win = await chrome.windows.create(opts);
-  await chrome.storage.local.set({ activityWindow: win.id });
 }
 
 chrome.windows.onRemoved.addListener(async (id) => {
@@ -297,83 +320,121 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   const now = new Date();
   const working = isWorkTime(settings, now);
 
-  // 1. Count screen time and how long since the last break.
-  if (state === "active") {
-    live.idleRun = 0;
-    live.stretch += 1;
-    live.sinceMicro += 1;
-    const stretch = live.stretch;
-    updateDay((d) => {
-      d.active = (d.active || 0) + 1;
-      d.longest = Math.max(d.longest || 0, stretch);
-    });
-  } else {
-    live.idleRun += 1;
-    if (live.idleRun >= AWAY_RESET_MINUTES || state === "locked") {
-      // Being away from the screen is a break in itself.
-      live.stretch = 0;
-      live.sinceMicro = 0;
-      live.deferred = null;
-    }
-  }
-
-  // 2. Lunch and end-of-day nudges.
-  const n = nowMinutes(now);
-  const workday = settings.workDays.includes(now.getDay());
-  if (workday && settings.lunchOn && !live.lunchShown && state === "active") {
-    const lunch = minutesOfDay(settings.lunchTime);
-    if (n >= lunch && n < lunch + 60) {
-      live.lunchShown = true;
-      chrome.notifications.create("sg-lunch", {
-        type: "basic",
-        iconUrl: "icons/icon128.png",
-        title: "🍱 Lunch time",
-        message: "Step away from the screen for lunch. Eating at your desk doesn't count as a break.",
-        priority: 1
+  try {
+    // 1. Count screen time and how long since the last break.
+    if (state === "active") {
+      live.idleRun = 0;
+      live.stretch += 1;
+      live.sinceMicro += 1;
+      const stretch = live.stretch;
+      updateDay((d) => {
+        d.active = (d.active || 0) + 1;
+        d.longest = Math.max(d.longest || 0, stretch);
       });
-    }
-  }
-  if (workday && settings.wrapUpOn && !live.wrapShown && state === "active") {
-    const end = minutesOfDay(settings.workEnd);
-    if (n >= end && n < end + 120) {
-      live.wrapShown = true;
-      const { stats = {} } = await chrome.storage.local.get("stats");
-      if (((stats[dateKey()] || {}).active || 0) >= 60) {
-        openWindow(chrome.runtime.getURL("summary.html"));
+    } else {
+      live.idleRun += 1;
+      if (live.idleRun >= AWAY_RESET_MINUTES || state === "locked") {
+        // Being away from the screen is a break in itself.
+        live.stretch = 0;
+        live.sinceMicro = 0;
+        live.deferred = null;
       }
     }
-  }
 
-  // 3. Decide whether an activity is due.
-  if (working && state === "active" && !(await isPaused())) {
-    const t = Date.now();
-    const moveDue = settings.moveOn && live.stretch >= settings.moveEvery && t >= live.moveSnoozeUntil;
-    const microDue = settings.microOn && live.sinceMicro >= settings.microEvery && t >= live.microSnoozeUntil;
-
-    if (await inMeeting(settings)) {
-      // Never interrupt a call. Remember what was due and offer it afterwards.
-      if (moveDue) live.deferred = "move";
-      else if (microDue && !live.deferred) live.deferred = "micro";
-    } else if (live.deferred) {
-      const kind = live.deferred;
-      live.deferred = null;
-      if (kind === "move") live.moveSnoozeUntil = t + SNOOZE_MINUTES * 60000;
-      live.sinceMicro = 0;
-      await showActivity(kind, "meeting");
-    } else if (moveDue) {
-      // Ask again in 10 minutes if it's ignored; finishing it resets the clock.
-      live.moveSnoozeUntil = t + SNOOZE_MINUTES * 60000;
-      live.sinceMicro = 0;
-      await showActivity("move", "timer");
-    } else if (microDue) {
-      // Skip a micro-break when a movement break is only a few minutes away.
-      const moveSoon = settings.moveOn && settings.moveEvery - live.stretch <= 5;
-      live.sinceMicro = 0;
-      if (!moveSoon) await showActivity("micro", "timer");
+    // 2. Lunch and end-of-day nudges. Checked on the clock alone, not on the idle
+    // state: someone reading, on a desktop-app call, or just sitting still for a
+    // few minutes would otherwise never be seen as "active" during the window, and
+    // a one-time nudge would be silently lost for the day.
+    const n = nowMinutes(now);
+    const workday = settings.workDays.includes(now.getDay());
+    if (workday && settings.lunchOn && !live.lunchShown) {
+      const lunch = minutesOfDay(settings.lunchTime);
+      if (n >= lunch && n < lunch + 60) {
+        live.lunchShown = true;
+        chrome.notifications.create("sg-lunch", {
+          type: "basic",
+          iconUrl: "icons/icon128.png",
+          title: "🍱 Lunch time",
+          message: "Step away from the screen for lunch. Eating at your desk doesn't count as a break.",
+          priority: 1
+        });
+      }
     }
-  }
+    if (workday && settings.wrapUpOn && !live.wrapShown) {
+      const end = minutesOfDay(settings.workEnd);
+      if (n >= end && n < end + 120) {
+        live.wrapShown = true;
+        const { stats = {} } = await chrome.storage.local.get("stats");
+        if (((stats[dateKey()] || {}).active || 0) >= 60) {
+          await openWindow(chrome.runtime.getURL("summary.html"));
+        }
+      }
+    }
 
-  await setLive(live);
+    // 3. Decide whether an activity is due.
+    if (working && state === "active" && !(await isPaused())) {
+      const t = Date.now();
+      const moveDue = settings.moveOn && live.stretch >= settings.moveEvery && t >= live.moveSnoozeUntil;
+      const microDue = settings.microOn && live.sinceMicro >= settings.microEvery && t >= live.microSnoozeUntil;
+
+      if (await inMeeting(settings)) {
+        // Never interrupt a call. Remember what was due and offer it afterwards.
+        if (moveDue) live.deferred = "move";
+        else if (microDue && !live.deferred) live.deferred = "micro";
+        live.moveWaitSince = null;
+        live.microWaitSince = null;
+      } else if (live.deferred) {
+        const kind = live.deferred;
+        live.deferred = null;
+        if (kind === "move") live.moveSnoozeUntil = t + SNOOZE_MINUTES * 60000;
+        live.sinceMicro = 0;
+        await showActivity(kind, "meeting");
+      } else if (moveDue) {
+        // Natural-pause delivery: hold it briefly, hoping for a tab/window switch
+        // (a likely transition) — but never longer than NATURAL_PAUSE_WAIT_MS, so
+        // it can't disappear indefinitely during one long continuous stretch.
+        if (!live.moveWaitSince) live.moveWaitSince = t;
+        const sawTransition = lastTransitionAt >= live.moveWaitSince;
+        const waitedLongEnough = t - live.moveWaitSince >= NATURAL_PAUSE_WAIT_MS;
+        if (sawTransition || waitedLongEnough) {
+          // Ask again in 10 minutes if it's ignored; finishing it resets the clock.
+          live.moveSnoozeUntil = t + SNOOZE_MINUTES * 60000;
+          live.sinceMicro = 0;
+          live.moveWaitSince = null;
+          await showActivity("move", "timer");
+        }
+      } else if (microDue) {
+        // Skip a micro-break when a movement break is only a few minutes away.
+        const moveSoon = settings.moveOn && settings.moveEvery - live.stretch <= 5;
+        if (moveSoon) {
+          live.sinceMicro = 0;
+          live.microWaitSince = null;
+        } else {
+          if (!live.microWaitSince) live.microWaitSince = t;
+          const sawTransition = lastTransitionAt >= live.microWaitSince;
+          const waitedLongEnough = t - live.microWaitSince >= NATURAL_PAUSE_WAIT_MS;
+          if (sawTransition || waitedLongEnough) {
+            live.sinceMicro = 0;
+            live.microWaitSince = null;
+            await showActivity("micro", "timer");
+          }
+        }
+      } else {
+        live.moveWaitSince = null;
+        live.microWaitSince = null;
+      }
+    } else {
+      live.moveWaitSince = null;
+      live.microWaitSince = null;
+    }
+  } catch (err) {
+    console.error("Tick error:", err);
+  } finally {
+    // Always persist live state, even if something above threw — otherwise a
+    // transient failure (e.g. window creation) would leave snooze/reset state
+    // unsaved and the same break could get stuck retrying every minute.
+    await setLive(live);
+  }
 });
 
 // ---------- notifications ----------
