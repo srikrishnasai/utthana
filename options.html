@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unsit settings</title>
+  <link rel="icon" href="icons/icon48.png">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #EEF2F0; color: #1E2B33;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px; line-height: 1.5;
+    }
+    .serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+    header { background: #172230; color: #EEF2F0; padding: 40px 24px 36px; }
+    header .inner, main { max-width: 680px; margin: 0 auto; }
+    header h1 { font-size: 36px; font-weight: 600; line-height: 1.1; margin: 0 0 8px; }
+    header p { margin: 0; opacity: 0.72; }
+    header .brand { font-size: 14px; font-weight: 600; letter-spacing: 0.02em; margin: 0 0 6px; opacity: 0.7; }
+    main { padding: 12px 24px 80px; }
+    section { padding: 28px 0; border-bottom: 1px solid #D3DDD8; }
+    section:last-child { border-bottom: none; }
+    h2 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+    .lead { margin: 0 0 18px; color: #4A5A63; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 9px 0; }
+    .row label { cursor: pointer; }
+    .inline { display: flex; align-items: center; gap: 8px; color: #4A5A63; }
+    input[type="number"] {
+      width: 84px; font: inherit; font-variant-numeric: tabular-nums; text-align: right;
+      padding: 8px 10px; border-radius: 10px; border: 1.5px solid #BFCCC6; background: #fff; color: #1E2B33;
+    }
+    input[type="text"] {
+      flex: 1; min-width: 0; font: inherit; padding: 11px 14px;
+      border-radius: 10px; border: 1.5px solid #BFCCC6; background: #fff; color: #1E2B33;
+    }
+    input:focus { outline: none; border-color: #2F7D6D; box-shadow: 0 0 0 3px rgba(47,125,109,0.2); }
+    input[type="checkbox"], input[type="radio"] { width: 18px; height: 18px; accent-color: #2F7D6D; cursor: pointer; flex: none; }
+    input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible, button:focus-visible { outline: 3px solid #C9892B; outline-offset: 2px; }
+    .choice { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; cursor: pointer; }
+    .choice small { display: block; color: #6B7A82; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+    button {
+      font: inherit; font-weight: 600; cursor: pointer; border-radius: 10px;
+      padding: 11px 18px; border: 1.5px solid transparent;
+    }
+    .primary { background: #2F7D6D; color: #fff; }
+    .primary:hover { background: #276A5C; }
+    .remove { background: transparent; color: #8A4B2A; padding: 6px 10px; font-size: 14px; }
+    .remove:hover { background: #E8DDD5; }
+    .add { display: flex; gap: 10px; margin-top: 18px; }
+    .msg { min-height: 22px; margin: 8px 0 0; font-size: 14px; }
+    .msg.error { color: #A3412A; }
+    .msg.ok { color: #2F7D6D; }
+    .sub { font-size: 14px; font-weight: 600; color: #4A5A63; margin: 18px 0 4px; }
+    .empty { color: #6B7A82; font-size: 14px; padding: 6px 0; }
+    .muted { color: #6B7A82; font-size: 13px; }
+    .row label small, .choice small { display: block; color: #6B7A82; font-size: 13px; }
+    .row.indent { padding-left: 18px; }
+    .row.indent.off { opacity: 0.45; }
+    input[type="time"] {
+      font: inherit; padding: 7px 10px; border-radius: 10px; border: 1.5px solid #BFCCC6; background: #fff; color: #1E2B33;
+    }
+    .days { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .days label {
+      display: inline-flex; align-items: center; justify-content: center; min-width: 46px;
+      padding: 8px 10px; border-radius: 999px; border: 1.5px solid #BFCCC6; cursor: pointer; font-size: 14px; font-weight: 600; color: #4A5A63; background: #fff;
+    }
+    .days input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .days input:checked + span { color: #fff; }
+    .days label:has(input:checked) { background: #2F7D6D; border-color: #2F7D6D; color: #fff; }
+    .days label:has(input:focus-visible) { outline: 3px solid #C9892B; outline-offset: 2px; }
+    .ghost { background: transparent; color: #2F7D6D; border-color: #A9BDB6; padding: 9px 14px; font-size: 14px; }
+    .ghost:hover { background: #E2E9E6; }
+    .try { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    .act.unsuitable label { color: #9AA7AD; }
+    .tag { font-size: 11px; font-weight: 600; color: #8A6A2A; background: #F1E6D2; border-radius: 999px; padding: 2px 8px; margin-left: 6px; }
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+      background: #172230; color: #EEF2F0; padding: 10px 18px; border-radius: 999px;
+      font-size: 14px; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <p class="brand">Unsit</p>
+      <h1 class="serif">Settings</h1>
+      <p>Changes save as you make them.</p>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <h2 class="serif">Your workday</h2>
+      <p class="lead">Breaks only appear during your work hours. Evenings and weekends stay quiet.</p>
+
+      <p class="sub">Workdays</p>
+      <div class="days" id="days"></div>
+
+      <div class="row">
+        <label for="workStart">Start</label>
+        <input type="time" id="workStart">
+      </div>
+      <div class="row">
+        <label for="workEnd">Finish</label>
+        <input type="time" id="workEnd">
+      </div>
+      <p class="msg error" id="hoursMsg" role="status" style="min-height:0;margin:0"></p>
+      <div class="row">
+        <label for="lunchOn">Lunch reminder</label>
+        <span class="inline"><input type="time" id="lunchTime"><input type="checkbox" id="lunchOn"></span>
+      </div>
+      <div class="row">
+        <label for="wrapUpOn">End-of-day wrap-up<small>A short summary of your day when you finish.</small></label>
+        <input type="checkbox" id="wrapUpOn">
+      </div>
+    </section>
+
+    <section>
+      <h2 class="serif">Break rhythm</h2>
+      <p class="lead">Timers count only the minutes you're actually at the computer. Stepping away for 5 minutes counts as a break.</p>
+
+      <div class="row">
+        <label for="microOn">Micro-breaks<small>20–30 seconds at your desk: eyes, posture, wrists, breathing.</small></label>
+        <input type="checkbox" id="microOn">
+      </div>
+      <div class="row indent">
+        <label for="microEvery">Every</label>
+        <span class="inline"><input type="number" id="microEvery" min="5" max="90"> minutes</span>
+      </div>
+      <div class="row">
+        <label for="moveOn">Movement breaks<small>1–2 minutes away from the screen: water, stretch, walk.</small></label>
+        <input type="checkbox" id="moveOn">
+      </div>
+      <div class="row indent">
+        <label for="moveEvery">Every</label>
+        <span class="inline"><input type="number" id="moveEvery" min="10" max="180"> minutes</span>
+      </div>
+
+      <p class="sub">Where do you work?</p>
+      <label class="choice">
+        <input type="radio" name="workplace" value="office">
+        <span>In an office<small>Only discreet activities you can do at work. No push-ups or squats.</small></span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="workplace" value="home">
+        <span>From home<small>Includes floor exercises like push-ups and squats.</small></span>
+      </label>
+
+      <p class="sub">When a break is due</p>
+      <label class="choice">
+        <input type="radio" name="mode" value="window">
+        <span>Show it in a small window<small>A compact window opens with the activity, ready to start. You can snooze it.</small></span>
+      </label>
+      <label class="choice">
+        <input type="radio" name="mode" value="notify">
+        <span>Just send a notification<small>Click it when you're ready.</small></span>
+      </label>
+
+      <div class="row">
+        <label for="meetingDetect">Hold breaks during video calls<small>Detects Google Meet, Zoom and Teams calls in your browser. On a desktop-app call, use "Pause 1 hour" in the toolbar popup.</small></label>
+        <input type="checkbox" id="meetingDetect">
+      </div>
+
+      <div class="try">
+        <span class="muted">Try it now:</span>
+        <button class="ghost" id="tryMicro">Preview a micro-break</button>
+        <button class="ghost" id="tryMove">Preview a movement break</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="serif">Activities</h2>
+      <p class="lead">Breaks rotate through the ones you keep on, so you get something different each time.</p>
+      <p class="sub">Micro-breaks</p>
+      <div class="grid" id="microList"></div>
+      <p class="sub">Movement breaks</p>
+      <div class="grid" id="moveList"></div>
+    </section>
+
+    <section>
+      <h2 class="serif">Focus Guard</h2>
+      <p class="lead">A pause screen on distracting sites: name your reason, get a short timer.</p>
+      <div class="row">
+        <label for="sessionMinutes">Time allowed after the pause screen</label>
+        <span class="inline"><input type="number" id="sessionMinutes" min="1" max="120"> minutes</span>
+      </div>
+      <div class="row">
+        <label for="dailyGoal">Daily limit on distracting sites</label>
+        <span class="inline"><input type="number" id="dailyGoal" min="5" max="720"> minutes</span>
+      </div>
+
+      <p class="sub">Guarded sites</p>
+      <div class="grid" id="builtIn"></div>
+
+      <p class="sub">Your sites</p>
+      <div id="custom"></div>
+      <div class="add">
+        <input type="text" id="newSite" placeholder="For example: netflix.com" aria-label="Website to guard" autocomplete="off">
+        <button class="primary" id="addSite">Add site</button>
+      </div>
+      <p class="msg" id="siteMsg" role="status"></p>
+      <p class="muted">Chrome will ask you to allow Unsit on each site you add. Reload any open tab of that site afterwards.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status">Saved</div>
+  <script src="activities.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

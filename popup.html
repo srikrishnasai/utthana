@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Unsit</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      width: 340px; margin: 0;
+      background: #EEF2F0; color: #1E2B33;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px; line-height: 1.45;
+    }
+    .serif { font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+    header { background: #172230; color: #EEF2F0; padding: 18px 20px; }
+    header .name { font-size: 13px; opacity: 0.7; margin: 0 0 6px; }
+    header h1 { font-size: 25px; font-weight: 600; line-height: 1.15; margin: 0; }
+    header p { margin: 6px 0 0; font-size: 13px; opacity: 0.75; }
+    .bar { margin-top: 14px; height: 6px; border-radius: 3px; background: rgba(238,242,240,0.15); overflow: hidden; }
+    .bar span { display: block; height: 100%; width: 0; background: #2F7D6D; border-radius: 3px; transition: width 0.3s; }
+    .bar.due span { background: #C9892B; }
+    section { padding: 14px 20px; border-bottom: 1px solid #D3DDD8; }
+    section:last-child { border-bottom: none; }
+    h2 { font-size: 13px; font-weight: 600; color: #4A5A63; margin: 0 0 10px; }
+    .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .tile .n { font-size: 22px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .tile .l { font-size: 12px; color: #6B7A82; margin-top: 2px; }
+    .tile .e { font-size: 12px; margin-top: 2px; min-height: 16px; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      font: inherit; font-weight: 600; font-size: 13px; cursor: pointer;
+      padding: 9px 12px; border-radius: 10px; border: 1.5px solid transparent; white-space: nowrap;
+    }
+    button:focus-visible { outline: 3px solid #C9892B; outline-offset: 2px; }
+    .primary { background: #2F7D6D; color: #fff; }
+    .primary:hover { background: #276A5C; }
+    .ghost { background: transparent; color: #2F7D6D; border-color: #A9BDB6; }
+    .ghost:hover { background: #E2E9E6; }
+    .chart { display: flex; align-items: flex-end; gap: 8px; height: 76px; }
+    .col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .col .b { width: 100%; background: #A9BDB6; border-radius: 6px 6px 2px 2px; min-height: 3px; }
+    .col.today .b { background: #2F7D6D; }
+    .val, .day { font-size: 11px; color: #6B7A82; font-variant-numeric: tabular-nums; }
+    .col.today .day { color: #1E2B33; font-weight: 600; }
+    .line { margin: 0; color: #4A5A63; }
+    .foot { display: flex; align-items: center; justify-content: space-between; }
+    .link { font: inherit; font-weight: 600; color: #2F7D6D; background: transparent; border: none; cursor: pointer; padding: 4px 0; }
+    .link:hover { text-decoration: underline; }
+    .muted { font-size: 12px; color: #6B7A82; }
+  </style>
+</head>
+<body>
+  <header>
+    <p class="name">Unsit</p>
+    <h1 class="serif" id="headline">Loading…</h1>
+    <p id="subline"></p>
+    <div class="bar" id="bar" aria-hidden="true"><span id="barFill"></span></div>
+  </header>
+
+  <section>
+    <div class="tiles">
+      <div class="tile"><div class="n serif" id="screen">0m</div><div class="l">at the screen today</div></div>
+      <div class="tile"><div class="n serif" id="breaks">0</div><div class="l">breaks today</div><div class="e" id="emojis"></div></div>
+      <div class="tile"><div class="n serif" id="longest">0m</div><div class="l">longest stretch</div></div>
+      <div class="tile"><div class="n serif" id="water">0</div><div class="l">glasses of water</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="actions">
+      <button class="primary" id="breakNow">Take a break</button>
+      <button class="ghost" id="pause60">Pause 1h</button>
+      <button class="ghost" id="pauseDay">Pause today</button>
+      <button class="ghost" id="resume" hidden>Resume breaks</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Breaks, last 7 days</h2>
+    <div class="chart" id="chart"></div>
+  </section>
+
+  <section>
+    <h2>Focus Guard</h2>
+    <p class="line" id="focus"></p>
+  </section>
+
+  <section class="foot">
+    <span class="muted" id="hours"></span>
+    <button class="link" id="openSettings">Settings</button>
+  </section>
+
+  <script src="activities.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
