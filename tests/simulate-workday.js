@@ -24,7 +24,7 @@ const msg=(m)=>new Promise(r=>L.msg[0](m,{},r));
  meetingTabs=[{url:'https://meet.google.com/abc-defg-hij'}];
  await tick(10);                     // 10:55 move due during meeting -> deferred
  meetingTabs=[];
- await tick(1);                      // meeting ends -> show move (meeting)
+ await tick(3);                      // meeting ends -> settle (no transition simulated), then show move (meeting)
  await msg({type:'breakDone',activity:'water',kind:'move'});
  idle='idle'; await tick(6); idle='active'; // away 6 min -> natural break
  await tick(30);

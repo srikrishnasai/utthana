@@ -26,6 +26,7 @@
   const EXTRA_MINUTES = 2;
 
   let settings = { sessionMinutes: 5, sites: {} };
+  let protectUntil = 0;   // Focus Protection end time, if any (set from the popup)
   let session = null;      // { end, extended, intent }
   let overlayHost = null;  // full-screen pause/time-up layer
   let timerHost = null;    // small countdown pill
@@ -63,6 +64,10 @@
     const m = Math.floor(total / 60);
     const s = String(total % 60).padStart(2, "0");
     return `${m}:${s}`;
+  }
+
+  function formatClockTime(ts) {
+    return new Date(ts).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   }
 
   async function todayStats() {
@@ -145,6 +150,12 @@
       font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
       font-size: 17px; color: #1E2B33;
     }
+    .protect-note {
+      margin-top: 14px; padding: 12px 14px;
+      border-left: 3px solid #C9892B;
+      background: #F1E6D2; border-radius: 0 10px 10px 0;
+      font-size: 14px; color: #1E2B33;
+    }
     input {
       width: 100%; margin-top: 22px;
       font: inherit; font-size: 16px; color: #1E2B33;
@@ -223,12 +234,17 @@
     const t = await todayStats();
     const mins = settings.sessionMinutes;
     const minsText = `${mins} minute${mins === 1 ? "" : "s"}`;
+    const protecting = protectUntil && protectUntil > Date.now();
+    const protectNote = protecting
+      ? `<div class="protect-note">You're protecting your focus until ${formatClockTime(protectUntil)}.</div>`
+      : "";
     const root = mountOverlay(`
       <div class="backdrop" role="dialog" aria-modal="true" aria-labelledby="sg-title">
         <div class="card">
           <div class="breath" aria-hidden="true"></div>
           <h1 id="sg-title">What are you here for?</h1>
           <p>You're about to open ${escapeHtml(label)}. Name one reason, then go in for ${minsText}.</p>
+          ${protectNote}
           <input id="intent" maxlength="80" autocomplete="off"
             placeholder="For example: reply to a message" aria-label="Your reason for opening ${escapeHtml(label)}">
           <div class="actions">
@@ -446,9 +462,10 @@
   // ---------- start ----------
 
   async function init() {
-    const data = await safe(() => chrome.storage.local.get("settings"));
+    const data = await safe(() => chrome.storage.local.get(["settings", "protectUntil"]));
     if (!data) return;
     settings = { ...settings, ...(data.settings || {}) };
+    protectUntil = data.protectUntil || 0;
 
     const builtIn = Object.keys(SITES).find(matches);
     if (builtIn) {

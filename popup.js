@@ -15,16 +15,20 @@ function hm(mins) {
 const timeText = (ms) => new Date(ms).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
 async function render() {
-  const { stats = {}, settings = {}, parked = null } = await chrome.storage.local.get(["stats", "settings", "parked"]);
+  const { stats = {}, settings = {}, parked = null, protectUntil = 0 } = await chrome.storage.local.get(["stats", "settings", "parked", "protectUntil"]);
   const status = (await chrome.runtime.sendMessage({ type: "status" }).catch(() => null)) || {};
   const live = status.live || { stretch: 0 };
   const moveEvery = settings.moveEvery || 50;
   const today = stats[dateKey(new Date())] || {};
   const paused = status.pausedUntil > Date.now();
+  const protecting = paused && protectUntil > Date.now();
 
   // Header
   let headline, subline;
-  if (paused) {
+  if (protecting) {
+    headline = "Protecting your focus";
+    subline = `Until ${timeText(protectUntil)}. Breaks are held, and Focus Guard will remind you of this if you open a guarded site.`;
+  } else if (paused) {
     headline = "Breaks paused";
     subline = `Back on at ${timeText(status.pausedUntil)}.`;
   } else if (!status.working) {
@@ -56,10 +60,12 @@ async function render() {
     .map((id) => (ACTIVITIES.find((a) => a.id === id) || {}).emoji)
     .filter(Boolean).join(" ");
 
-  // Pause buttons
+  // Pause / Focus Protection buttons
+  $("protect60").hidden = paused;
   $("pause60").hidden = paused;
   $("pauseDay").hidden = paused;
   $("resume").hidden = !paused;
+  $("resume").textContent = protecting ? "End focus protection" : "Resume breaks";
 
   // Chart: breaks per day
   const days = [];
@@ -104,16 +110,24 @@ $("breakNow").addEventListener("click", async () => {
   await chrome.runtime.sendMessage({ type: "openBreak", kind: "move", newWindow: true });
   window.close();
 });
+$("protect60").addEventListener("click", async () => {
+  const res = await chrome.runtime.sendMessage({ type: "pause", minutes: 60 });
+  await chrome.storage.local.set({ protectUntil: res.until });
+  render();
+});
 $("pause60").addEventListener("click", async () => {
   await chrome.runtime.sendMessage({ type: "pause", minutes: 60 });
+  await chrome.storage.local.remove("protectUntil");
   render();
 });
 $("pauseDay").addEventListener("click", async () => {
   await chrome.runtime.sendMessage({ type: "pause", minutes: "day" });
+  await chrome.storage.local.remove("protectUntil");
   render();
 });
 $("resume").addEventListener("click", async () => {
   await chrome.runtime.sendMessage({ type: "pause", minutes: 0 });
+  await chrome.storage.local.remove("protectUntil");
   render();
 });
 $("openSettings").addEventListener("click", () => {

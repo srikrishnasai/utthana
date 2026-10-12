@@ -37,6 +37,7 @@ const AWAY_RESET_MINUTES = 5;    // 5 min away counts as a natural break
 const SNOOZE_MINUTES = 10;
 const WINDOW_SIZE = { width: 460, height: 660 };
 const NATURAL_PAUSE_WAIT_MS = 3 * 60000; // hold a due break this long, hoping for a transition
+const POST_MEETING_SETTLE_MS = 90 * 1000; // settling period after a call before offering the deferred break
 
 // A tab/window switch is a weak signal that someone just finished one thing and
 // is starting another — a better moment to offer a break than mid-keystroke.
@@ -177,7 +178,7 @@ async function getLive() {
   if (!live || live.date !== today) {
     return { date: today, stretch: 0, sinceMicro: 0, idleRun: 0, deferred: null,
              moveSnoozeUntil: 0, microSnoozeUntil: 0, lunchShown: false, wrapShown: false,
-             moveWaitSince: null, microWaitSince: null };
+             moveWaitSince: null, microWaitSince: null, postMeetingSince: null };
   }
   return live;
 }
@@ -383,12 +384,26 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
         else if (microDue && !live.deferred) live.deferred = "micro";
         live.moveWaitSince = null;
         live.microWaitSince = null;
+        live.postMeetingSince = null;
       } else if (live.deferred) {
-        const kind = live.deferred;
-        live.deferred = null;
-        if (kind === "move") live.moveSnoozeUntil = t + SNOOZE_MINUTES * 60000;
-        live.sinceMicro = 0;
-        await showActivity(kind, "meeting");
+        // Post-meeting transition: a short settling period rather than firing
+        // the instant the call ends, so it doesn't feel like it was lying in
+        // wait — shown as soon as a transition signal arrives, or once
+        // POST_MEETING_SETTLE_MS elapses, whichever comes first. If another
+        // meeting starts during the settle, the branch above takes over next
+        // tick and this resets, so it yields immediately rather than firing
+        // mid-call.
+        if (!live.postMeetingSince) live.postMeetingSince = t;
+        const sawTransition = lastTransitionAt >= live.postMeetingSince;
+        const settled = t - live.postMeetingSince >= POST_MEETING_SETTLE_MS;
+        if (sawTransition || settled) {
+          const kind = live.deferred;
+          live.deferred = null;
+          live.postMeetingSince = null;
+          if (kind === "move") live.moveSnoozeUntil = t + SNOOZE_MINUTES * 60000;
+          live.sinceMicro = 0;
+          await showActivity(kind, "meeting");
+        }
       } else if (moveDue) {
         // Natural-pause delivery: hold it briefly, hoping for a tab/window switch
         // (a likely transition) — but never longer than NATURAL_PAUSE_WAIT_MS, so
@@ -426,6 +441,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     } else {
       live.moveWaitSince = null;
       live.microWaitSince = null;
+      live.postMeetingSince = null;
     }
   } catch (err) {
     console.error("Tick error:", err);
