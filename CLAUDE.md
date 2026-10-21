@@ -31,7 +31,7 @@ Owner: Krishna (Hyderabad, India). Built iteratively in Claude chat, now moving 
 ## Upcoming dates
 
 - **Oct 30, 2026 (EOD):** submission deadline for Tech Spotlight, Barbarian's monthly internal tech show-and-tell. Krishna plans to demo this.
-- **Nov 13, 2026:** first Tech Spotlight (then every 2nd Friday). Demo title idea: "Unsit: a workday companion I built after noticing my scrolling habit". Demo plan: own usage stats as the hook → live demo (use Settings "Preview a micro-break / movement break" buttons and short intervals so nobody waits) → how it was built with AI → what didn't work → what's next.
+- **Nov 13, 2026:** first Tech Spotlight (then every 2nd Friday). Demo title idea: "Unsit: a workday companion I built after noticing my scrolling habit". Demo plan: own usage stats as the hook → live demo → how it was built with AI → what didn't work → what's next. Full script with exact clicks, timing, and a prep checklist: [`docs/DEMO-SCRIPT.md`](docs/DEMO-SCRIPT.md) — written 2026-10-12, covers all the 2.2.0/2.3.0 features (Park This, Focus Protection, natural-pause/post-meeting delivery). Keep it in sync as the app changes or after rehearsing.
 
 ## Product decisions already made
 
