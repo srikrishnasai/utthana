@@ -1,7 +1,7 @@
 # Utthana — Tech Spotlight demo script
 
-**Event:** Barbarian's Tech Spotlight, 2026-11-13 (submission deadline 2026-10-30 EOD).
-**Working title:** "Utthana: a workday companion I built after noticing my scrolling habit." (Named "Unsit" when this script was first written — renamed 2026-11-20 after a trademark conflict; see CLAUDE.md's "Naming history.")
+**Event:** Barbarian's Tech Spotlight, Friday 11 December 2026, 8:30 PM IST (registered 2026-11-20; confirmation of the actual slot still pending from the organizers).
+**Working title:** "Utthana: a workday companion for people who sit at a screen all day." (Named "Unsit" when this script was first written — renamed 2026-11-20 after a trademark conflict; see CLAUDE.md's "Naming history.")
 **Assumed slot length: 8–10 minutes** (typical for a monthly internal lightning-talk
 format) — adjust the timing boxes below if your actual slot is longer or shorter.
 This is a living doc; update it as the app changes or as you rehearse and find
@@ -43,6 +43,7 @@ Point at, in order:
 - **Screen time today** / **breaks today** tile.
 - The **7-day breaks chart** — "I've actually been using this daily since I started building it."
 - The **end-of-day wrap-up** ("Explain My Day") is the strongest "it already knows things about my day" moment: *"You took 6 quick resets and 4 movement breaks today... you also caught yourself 3 times on a distracting site and chose to close the tab instead — that counts."* That last line especially tends to land with a room — it's not guilt, it's a quiet compliment. There's no in-UI "preview" button for this screen (unlike the micro/move activities), so to show it live, open a new tab to `chrome-extension://<your-extension-id>/summary.html` directly — find your extension's id at `chrome://extensions` with Developer mode on. It'll render against whatever's in today's real stats, so do this after you've already generated a bit of data earlier in the day. Have a screenshot as backup in case the live numbers look thin.
+- Scroll down a touch on that same `summary.html` tab to the **Workday Timeline** — a readable strip like *"09:04–10:38 Active, 10:38–11:12 Meeting, 11:12–11:14 On a guarded site..."* turning the whole day into one glance. Worth saying out loud: it's built only from signals Utthana already has (active/idle/meeting/Focus Guard), not from tracking which sites or apps you were actually using — same privacy line as everything else, just visualized.
 
 Keep this tight. The hook's job is "this is real and I use it," not a full feature tour.
 
@@ -134,6 +135,12 @@ Suggested beats, not a script — say this in your own words:
   runs a fake 9-hour workday against the real scheduling code with a mocked
   Chrome API in about half a second — show the terminal output live if you
   want a "yes, this is actually tested" moment that isn't just a claim.
+- A small concrete example worth naming: **adaptive activity selection** — the
+  shuffle bag that picks your next break activity now quietly leans toward
+  the ones you tend to accept over ones you skip (bounded so nothing can
+  dominate or disappear, and never shown to you as a number) — built, tested,
+  and done in one focused pass once the pattern from the earlier features was
+  already in place.
 - Mention there's a longer-term product vision doc (`docs/UNSIT-PRODUCT-VISION-
   AND-BUILD-SPEC.md`) that reframes where this could go — ties directly into
   §5 below.
