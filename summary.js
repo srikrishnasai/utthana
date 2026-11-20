@@ -12,6 +12,70 @@ function closeThisTab() {
     .catch(() => window.close());
 }
 
+// ---------- workday timeline ----------
+// Turns background.js's raw per-day event log into a readable list. Only
+// ever labels what Unsit actually observed (idle, meeting, an active Focus
+// Guard session) — never a site/app category, since that signal doesn't
+// exist here and shouldn't be guessed at.
+
+const STATE_LABELS = { active: "Active", idle: "Away", meeting: "Meeting", focusguard: "On a guarded site" };
+const MARK_LABELS = { micro: "Micro break", move: "Movement break", lunch: "Lunch" };
+const MIN_SEGMENT_MS = 2 * 60 * 1000; // blips shorter than this fold into whatever came before, for readability
+
+function timeOfDay(ts) {
+  return new Date(ts).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+// Exported as a plain function (not wrapped in an IIFE) so it can be
+// exercised directly by tests/workday-timeline.js without a DOM.
+function buildTimelineRows(timeline, nowTs) {
+  const states = (timeline || []).filter((e) => e.type === "state").sort((a, b) => a.t - b.t);
+  const marks = (timeline || []).filter((e) => e.type === "mark");
+
+  const segments = [];
+  for (let i = 0; i < states.length; i++) {
+    const start = states[i].t;
+    const end = i + 1 < states.length ? states[i + 1].t : nowTs;
+    segments.push({ state: states[i].state, start, end });
+  }
+
+  // Merge blips shorter than MIN_SEGMENT_MS into the previous segment, and
+  // merge consecutive segments that ended up with the same state.
+  const merged = [];
+  for (const seg of segments) {
+    const prev = merged[merged.length - 1];
+    if (prev && (seg.end - seg.start < MIN_SEGMENT_MS || prev.state === seg.state)) {
+      prev.end = seg.end;
+    } else {
+      merged.push({ ...seg });
+    }
+  }
+
+  const rows = merged.map((seg) => ({
+    sortKey: seg.start,
+    time: `${timeOfDay(seg.start)}–${timeOfDay(seg.end)}`,
+    label: STATE_LABELS[seg.state] || seg.state,
+    isMark: false
+  }));
+  marks.forEach((m) => {
+    rows.push({ sortKey: m.t, time: timeOfDay(m.t), label: MARK_LABELS[m.label] || m.label, isMark: true });
+  });
+  rows.sort((a, b) => a.sortKey - b.sortKey);
+  return rows;
+}
+
+function renderTimeline(timeline) {
+  const box = $("timeline");
+  const rows = buildTimelineRows(timeline, Date.now());
+  if (!rows.length) {
+    box.innerHTML = `<p class="tempty">Nothing logged yet today.</p>`;
+    return;
+  }
+  box.innerHTML = rows.map((r) =>
+    `<div class="trow${r.isMark ? " mark" : ""}"><span class="ttime">${r.time}</span><span class="tlabel">${r.label}</span></div>`
+  ).join("");
+}
+
 (async () => {
   const { stats = {}, settings = {} } = await chrome.storage.local.get(["stats", "settings"]);
   const d = new Date();
@@ -53,6 +117,8 @@ function closeThisTab() {
     notes.push(`You also caught yourself ${resisted} time${resisted === 1 ? "" : "s"} on a distracting site and chose to close the tab instead — that counts.`);
   }
   $("note").textContent = notes.join(" ");
+
+  renderTimeline(day.timeline);
 })();
 
 $("done").addEventListener("click", closeThisTab);

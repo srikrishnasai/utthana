@@ -34,12 +34,17 @@ const originsFor = (d) => [`*://${d}/*`, `*://*.${d}/*`];
 let settings;
 let toastTimer;
 
-function save() {
-  chrome.storage.local.set({ settings });
+function toast(text) {
   const t = $("toast");
+  t.textContent = text;
   t.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove("show"), 1200);
+}
+
+function save() {
+  chrome.storage.local.set({ settings });
+  toast("Saved");
 }
 
 // ---------- generic bindings ----------
@@ -252,6 +257,10 @@ $("newSite").addEventListener("keydown", (e) => { if (e.key === "Enter") addSite
 
 $("tryMicro").addEventListener("click", () => chrome.runtime.sendMessage({ type: "preview", kind: "micro" }));
 $("tryMove").addEventListener("click", () => chrome.runtime.sendMessage({ type: "preview", kind: "move" }));
+$("resetActivityPrefs").addEventListener("click", async () => {
+  await chrome.runtime.sendMessage({ type: "resetActivityPrefs" });
+  toast("Preferences reset");
+});
 
 // ---------- start ----------
 

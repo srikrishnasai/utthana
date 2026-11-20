@@ -171,6 +171,26 @@ function updateDay(fn) {
 
 const bump = (field, amount = 1) => updateDay((d) => { d[field] = (d[field] || 0) + amount; });
 
+// ---------- workday timeline ----------
+// A plain per-day log of state changes and point events — only from signals
+// Unsit already has (idle, meeting detection, an active Focus Guard session),
+// never anything that would need reading page content or site categories.
+// Rendered into a readable list by summary.js.
+
+function logTimelineState(state, t = Date.now()) {
+  return updateDay((d) => {
+    d.timeline = d.timeline || [];
+    d.timeline.push({ type: "state", state, t });
+  });
+}
+
+function logTimelineMark(label, t = Date.now(), extra) {
+  return updateDay((d) => {
+    d.timeline = d.timeline || [];
+    d.timeline.push({ type: "mark", label, t, ...(extra ? { extra } : {}) });
+  });
+}
+
 // Live state for today: minutes since last break, etc.
 async function getLive() {
   const { live } = await chrome.storage.local.get("live");
@@ -178,7 +198,8 @@ async function getLive() {
   if (!live || live.date !== today) {
     return { date: today, stretch: 0, sinceMicro: 0, idleRun: 0, deferred: null,
              moveSnoozeUntil: 0, microSnoozeUntil: 0, lunchShown: false, wrapShown: false,
-             moveWaitSince: null, microWaitSince: null, postMeetingSince: null };
+             moveWaitSince: null, microWaitSince: null, postMeetingSince: null,
+             timelineState: null };
   }
   return live;
 }
@@ -196,20 +217,75 @@ function shuffle(list) {
   return a;
 }
 
+// Adaptive activity selection (vision doc §11): "varied with a reason," not
+// favoritism. A gentle, bounded nudge (0.4x-1.6x) from lifetime accept/skip
+// history biases which activities tend to come up EARLIER in a shuffle bag —
+// it never removes an activity from the rotation or lets one dominate, so
+// variety is structurally guaranteed regardless of history.
+function activityWeight(stat) {
+  if (!stat) return 1;
+  const net = (stat.accepted || 0) - (stat.skipped || 0);
+  const clamped = Math.max(-3, Math.min(3, net));
+  return 1 + clamped * 0.2;
+}
+
+// A weighted random permutation: repeatedly sample one remaining item with
+// probability proportional to its weight, without replacement. Every id in
+// `ids` appears exactly once in the result — only the order is biased.
+function weightedShuffle(ids, weights) {
+  const pool = ids.map((id) => ({ id, w: Math.max(0.05, weights[id] || 1) }));
+  const order = [];
+  while (pool.length) {
+    const total = pool.reduce((sum, p) => sum + p.w, 0);
+    let r = Math.random() * total;
+    let idx = pool.length - 1;
+    for (let i = 0; i < pool.length; i++) {
+      r -= pool[i].w;
+      if (r <= 0) { idx = i; break; }
+    }
+    order.push(pool[idx].id);
+    pool.splice(idx, 1);
+  }
+  return order;
+}
+
+// Lifetime (not per-day) accept/skip counts per activity id, used only to
+// compute the weight above — never shown to the user, never a score, never
+// read as anything about the user themselves. Its own serialized queue, same
+// reasoning as updateDay: concurrent tabs must not overwrite each other.
+let activityStatsQueue = Promise.resolve();
+
+function recordActivityFeedback(id, field) {
+  activityStatsQueue = activityStatsQueue.then(async () => {
+    if (!id) return;
+    const { activityStats = {} } = await chrome.storage.local.get("activityStats");
+    const stat = activityStats[id] || { accepted: 0, skipped: 0 };
+    stat[field] = (stat[field] || 0) + 1;
+    activityStats[id] = stat;
+    await chrome.storage.local.set({ activityStats });
+  }).catch((err) => console.error("Activity feedback error:", err));
+  return activityStatsQueue;
+}
+
 let pickQueue = Promise.resolve();
 
-function nextActivity(kind) {
+function nextActivity(kind, skippedId) {
   const run = pickQueue.then(async () => {
+    if (skippedId) await recordActivityFeedback(skippedId, "skipped");
+
     const settings = await getSettings();
     let ids = availableActivities(settings, kind).map((a) => a.id);
     if (!ids.length) ids = [kind === "micro" ? "eyes" : "breathe"];
 
     const bagKey = "bag:" + kind;
     const lastKey = "last:" + kind;
-    const data = await chrome.storage.local.get([bagKey, lastKey]);
+    const data = await chrome.storage.local.get([bagKey, lastKey, "activityStats"]);
     let bag = (data[bagKey] || []).filter((id) => ids.includes(id));
     if (!bag.length) {
-      bag = shuffle(ids);
+      const activityStats = data.activityStats || {};
+      const weights = {};
+      ids.forEach((id) => { weights[id] = activityWeight(activityStats[id]); });
+      bag = weightedShuffle(ids, weights);
       if (bag.length > 1 && bag[0] === data[lastKey]) bag.push(bag.shift());
     }
     const id = bag.shift();
@@ -342,7 +418,29 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       }
     }
 
-    // 2. Lunch and end-of-day nudges. Checked on the clock alone, not on the idle
+    // 2. Workday timeline: log a state change during work hours only, using
+    // signals already in hand (idle, meeting detection, an active Focus Guard
+    // session) — never anything about which site or app is actually open.
+    // Priority: a call always wins, same as everywhere else in this file.
+    let meeting = false;
+    if (working) {
+      meeting = await inMeeting(settings);
+      let category;
+      if (meeting) category = "meeting";
+      else if (state !== "active") category = "idle";
+      else {
+        const sessionKeys = [...BUILT_IN_SITES, ...settings.customSites].map((d) => "session:" + d);
+        const sessions = await chrome.storage.local.get(sessionKeys);
+        const guarded = Object.values(sessions).some((s) => s && s.end > Date.now());
+        category = guarded ? "focusguard" : "active";
+      }
+      if (live.timelineState !== category) {
+        live.timelineState = category;
+        logTimelineState(category);
+      }
+    }
+
+    // 3. Lunch and end-of-day nudges. Checked on the clock alone, not on the idle
     // state: someone reading, on a desktop-app call, or just sitting still for a
     // few minutes would otherwise never be seen as "active" during the window, and
     // a one-time nudge would be silently lost for the day.
@@ -352,6 +450,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       const lunch = minutesOfDay(settings.lunchTime);
       if (n >= lunch && n < lunch + 60) {
         live.lunchShown = true;
+        logTimelineMark("lunch");
         chrome.notifications.create("sg-lunch", {
           type: "basic",
           iconUrl: "icons/icon128.png",
@@ -372,13 +471,13 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
       }
     }
 
-    // 3. Decide whether an activity is due.
+    // 4. Decide whether an activity is due.
     if (working && state === "active" && !(await isPaused())) {
       const t = Date.now();
       const moveDue = settings.moveOn && live.stretch >= settings.moveEvery && t >= live.moveSnoozeUntil;
       const microDue = settings.microOn && live.sinceMicro >= settings.microEvery && t >= live.microSnoozeUntil;
 
-      if (await inMeeting(settings)) {
+      if (meeting) {
         // Never interrupt a call. Remember what was due and offer it afterwards.
         if (moveDue) live.deferred = "move";
         else if (microDue && !live.deferred) live.deferred = "micro";
@@ -514,10 +613,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       }
 
       case "nextActivity":
-        return { id: await nextActivity(msg.kind || "move") };
+        // msg.skipped: the activity id the user just swapped away from
+        // ("Something else") — a specific, per-activity dislike signal.
+        return { id: await nextActivity(msg.kind || "move", msg.skipped) };
 
       case "snooze":
         await snooze(msg.kind || "move");
+        return { ok: true };
+
+      case "activitySkipped":
+        // "Not now" on the intro screen: declined before even starting.
+        await recordActivityFeedback(msg.activity, "skipped");
+        return { ok: true };
+
+      case "resetActivityPrefs":
+        await chrome.storage.local.remove("activityStats");
         return { ok: true };
 
       case "breakDone": {
@@ -528,6 +638,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           d.activities = d.activities || {};
           d.activities[msg.activity] = (d.activities[msg.activity] || 0) + 1;
         });
+        await recordActivityFeedback(msg.activity, "accepted");
+        await logTimelineMark(kind, Date.now(), msg.activity);
         const live = await getLive();
         live.sinceMicro = 0;
         live.microSnoozeUntil = 0;

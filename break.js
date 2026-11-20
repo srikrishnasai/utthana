@@ -103,16 +103,24 @@ function stopSpeaking() {
   }
 }
 
-async function goToNextActivity() {
+async function goToNextActivity(markSkipped) {
   stopSpeaking();
   try {
-    const res = await chrome.runtime.sendMessage({ type: "nextActivity", kind });
+    const res = await chrome.runtime.sendMessage({
+      type: "nextActivity", kind,
+      skipped: markSkipped ? activity.id : undefined
+    });
     const q = new URLSearchParams(params);
     q.set("a", res.id);
     location.search = q.toString();
   } catch (e) {
     location.reload();
   }
+}
+
+async function skipAndClose() {
+  try { await chrome.runtime.sendMessage({ type: "activitySkipped", activity: activity.id, kind }); } catch (e) {}
+  closeThisTab();
 }
 
 function renderStepDots(current) {
@@ -199,9 +207,9 @@ $("introText").textContent = activity.intro;
 setCenter(activity.emoji, true);
 
 $("start").addEventListener("click", () => { show("running"); runStep(0); });
-$("swap").addEventListener("click", goToNextActivity);
-$("another").addEventListener("click", goToNextActivity);
-$("skip").addEventListener("click", closeThisTab);
+$("swap").addEventListener("click", () => goToNextActivity(true));
+$("another").addEventListener("click", () => goToNextActivity(false));
+$("skip").addEventListener("click", skipAndClose);
 $("back").addEventListener("click", closeThisTab);
 
 if (auto) {
