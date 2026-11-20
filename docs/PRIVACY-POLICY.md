@@ -1,5 +1,10 @@
 # Unsit — Privacy Policy
 
+⚠️ **Written under the old name "Unsit," before the 2026-11-20 rename to
+"Utthana."** Every "Unsit" below needs replacing before this is published —
+the privacy practices themselves are unaffected by the rename, only the name.
+See CLAUDE.md's "Naming history" section for why this renamed.
+
 *Last updated: [DATE — fill in before publishing]*
 
 ## The short version

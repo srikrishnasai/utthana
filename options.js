@@ -242,7 +242,7 @@ async function addSite() {
     return;
   }
   if (!granted) {
-    message(`Unsit needs permission to show the pause screen on ${domain}.`, "error");
+    message(`Utthana needs permission to show the pause screen on ${domain}.`, "error");
     return;
   }
   settings.customSites = [...settings.customSites, domain];

@@ -1,7 +1,7 @@
 // Verifies break.js's "read steps aloud" feature only ever speaks through an
 // on-device ("local") voice, and stays completely silent if none is
 // installed — it must never fall back to a voice Chrome fetches from the
-// network, which would break Unsit's "nothing leaves your device" promise.
+// network, which would break Utthana's "nothing leaves your device" promise.
 // Run: node tests/speak-voice.js
 const path = require("path");
 const fs = require("fs");

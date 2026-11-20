@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Unsit",
-  "version": "2.5.0",
+  "name": "Utthana",
+  "version": "2.6.0",
   "description": "Get up, feel better. Short breaks at the right moments, never during calls, plus a pause screen for distracting sites.",
   "permissions": [
     "storage",
@@ -15,7 +15,7 @@
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Unsit",
+    "default_title": "Utthana",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -56,5 +56,5 @@
     "*://teams.microsoft.com/*",
     "*://teams.live.com/*"
   ],
-  "short_name": "Unsit"
+  "short_name": "Utthana"
 }

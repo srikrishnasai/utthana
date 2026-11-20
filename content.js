@@ -1,4 +1,4 @@
-// Unsit content script.
+// Utthana content script.
 // Shows a pause screen on guarded sites, runs a short session timer,
 // and counts the minutes you actually spend there.
 

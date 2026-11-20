@@ -1,7 +1,7 @@
-# Unsit — Tech Spotlight demo script
+# Utthana — Tech Spotlight demo script
 
 **Event:** Barbarian's Tech Spotlight, 2026-11-13 (submission deadline 2026-10-30 EOD).
-**Working title:** "Unsit: a workday companion I built after noticing my scrolling habit."
+**Working title:** "Utthana: a workday companion I built after noticing my scrolling habit." (Named "Unsit" when this script was first written — renamed 2026-11-20 after a trademark conflict; see CLAUDE.md's "Naming history.")
 **Assumed slot length: 8–10 minutes** (typical for a monthly internal lightning-talk
 format) — adjust the timing boxes below if your actual slot is longer or shorter.
 This is a living doc; update it as the app changes or as you rehearse and find
@@ -88,7 +88,7 @@ distraction instead of breaks.
 
 ### 2.5 Meeting deferral + the settling period (~1 min)
 Switch to your pre-opened `meet.google.com/abc-defg-hij` tab.
-> "If I'm in a call, Unsit will never interrupt — whatever's due just waits."
+> "If I'm in a call, Utthana will never interrupt — whatever's due just waits."
 Switch back to your guarded-site tab or close the Meet tab to end the
 "call," and narrate rather than wait the full 90 seconds live:
 > "When the call ends, it doesn't fire instantly either — same idea as
@@ -152,13 +152,17 @@ candid, not a humblebrag:
   that queue). Didn't notice this until a regression test's output changed
   shape between runs — a good "AI-assisted development still needs you to
   actually read the diff" anecdote.
-- **The name.** Picked "Unsit" without doing a real trademark search first —
-  a plain web search said it was clear. A direct USPTO database search later
-  turned up a live, registered trademark for the exact word, held by a
-  company that sells "UnSit" branded standing/treadmill desks. Good lesson in
-  "the AI's first answer isn't the thorough one, and some checks are worth
-  doing twice, properly." (Keep this light — it's a real, current, unresolved
-  decision, not a resolved punchline. Say that explicitly if asked.)
+- **The name.** Originally picked "Unsit" without doing a real trademark
+  search first — a plain web search said it was clear. A direct USPTO
+  database search later turned up a live, registered trademark for the exact
+  word, held by a company that sells "UnSit" branded standing/treadmill
+  desks. Good lesson in "the AI's first answer isn't the thorough one, and
+  some checks are worth doing twice, properly" — so the second time around,
+  before landing on "Utthana" (Sanskrit for "rising/standing up"), every
+  serious candidate got the real USPTO check *and* a search for existing
+  apps/extensions under that name, not just a web search. This is a complete,
+  resolved story now (name changed, root cause fixed) — a good one to tell
+  precisely because it has an ending, not an excuse.
 
 ---
 

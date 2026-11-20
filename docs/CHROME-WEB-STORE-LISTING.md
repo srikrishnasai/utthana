@@ -1,5 +1,12 @@
 # Unsit — Chrome Web Store submission draft
 
+⚠️ **Written entirely under the old name "Unsit," before the 2026-11-20 rename
+to "Utthana."** This whole draft — single-purpose statement, permission
+justifications, data safety table, screenshots — needs a full refresh for the
+new name before it's usable for real submission. Left as-is for now since the
+Web Store track itself is still paused pending a separate decision; see
+CLAUDE.md's "Naming history" section for the full story.
+
 Draft text for the Developer Dashboard. Everything here is ready to paste in, but
 the exact field names/layout in the dashboard can shift — check this against the
 live form rather than assuming a 1:1 match. Written against the Developer Program

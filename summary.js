@@ -14,7 +14,7 @@ function closeThisTab() {
 
 // ---------- workday timeline ----------
 // Turns background.js's raw per-day event log into a readable list. Only
-// ever labels what Unsit actually observed (idle, meeting, an active Focus
+// ever labels what Utthana actually observed (idle, meeting, an active Focus
 // Guard session) — never a site/app category, since that signal doesn't
 // exist here and shouldn't be guessed at.
 

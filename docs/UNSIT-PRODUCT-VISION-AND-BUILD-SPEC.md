@@ -1,5 +1,12 @@
 # Unsit — Product Vision & Build Specification
 
+> **Editorial note (added 2026-11-20, not part of the original document):**
+> the product described below was renamed from "Unsit" to "Utthana" after a
+> trademark conflict — see CLAUDE.md's "Naming history" section. This file is
+> kept exactly as received; every "Unsit" below refers to what is now
+> Utthana. Don't edit the body below to match; treat this note as the only
+> addition.
+
 > **Audience:** Codex, Claude Code, Cursor, Abacus, and human engineers
 >
 > **Purpose:** This document is the source of truth for evolving Unsit from a Chrome/Edge break-reminder extension into a broader personal workday intelligence product.

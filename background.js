@@ -173,7 +173,7 @@ const bump = (field, amount = 1) => updateDay((d) => { d[field] = (d[field] || 0
 
 // ---------- workday timeline ----------
 // A plain per-day log of state changes and point events — only from signals
-// Unsit already has (idle, meeting detection, an active Focus Guard session),
+// Utthana already has (idle, meeting detection, an active Focus Guard session),
 // never anything that would need reading page content or site categories.
 // Rendered into a readable list by summary.js.
 
