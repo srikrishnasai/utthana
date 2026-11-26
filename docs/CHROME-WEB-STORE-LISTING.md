@@ -123,13 +123,15 @@ see the note in that file.
 
 - ~~A real USPTO trademark search~~ — **done** (see "Name / trademark check"
   above).
-- **Host the privacy policy somewhere with a public URL** — `docs/
-  PRIVACY-POLICY.md` is written but sitting in the repo; the dashboard needs a
-  real link. GitHub Pages on this same repo is the path of least resistance
-  if the repo is (or becomes) public. Still Krishna's call, not yet decided.
-- **Fill in the privacy policy's contact email** — the date placeholder is
-  now filled in, but the contact email is deliberately left as a placeholder
-  pending Krishna's choice of what address to publish there.
+- **Host the privacy policy at a public URL** — in progress, 2026-11-26.
+  Decided: GitHub Pages on this repo (renamed from "Unsit" to **utthana** on
+  GitHub, made public). A standalone styled page, `docs/privacy-policy.html`,
+  is written and ready — once GitHub Pages is enabled (Settings → Pages →
+  Deploy from branch → `master` / `/docs`), it'll be live at
+  `https://srikrishnasai.github.io/utthana/privacy-policy.html`. That's the
+  URL to paste into the dashboard's privacy policy field once confirmed live.
+- ~~Fill in the privacy policy's contact email~~ — **done**:
+  krishna161095@gmail.com.
 - ~~Screenshots~~ — **done, 2026-11-26**. Five real screenshots, captured from
   the actual extension loaded unpacked in Krishna's own Chrome (real usage
   data, not fabricated), each cropped to exactly 640×400: the popup, the

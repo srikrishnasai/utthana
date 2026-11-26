@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utthana — Privacy Policy</title>
+<style>
+  :root {
+    --ink: #172230;
+    --text: #1E2B33;
+    --mist: #EEF2F0;
+    --accent: #2F7D6D;
+    --accent-hover: #276A5C;
+    --muted: #4A5A63;
+    --muted-light: #6B7A82;
+    --border: #BFCCC6;
+    --border-light: #D3DDD8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--mist);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--ink);
+    color: #fff;
+    padding: 48px 24px 40px;
+  }
+  header .inner, main .inner {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  header .brand {
+    font-size: 14px;
+    opacity: 0.75;
+    margin: 0 0 8px;
+  }
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 36px;
+    margin: 0 0 8px;
+  }
+  header .updated {
+    opacity: 0.8;
+    font-size: 14px;
+    margin: 0;
+  }
+  main {
+    padding: 40px 24px 80px;
+  }
+  h2 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-size: 22px;
+    margin: 40px 0 12px;
+    color: var(--ink);
+  }
+  p { margin: 0 0 14px; }
+  .lead {
+    font-size: 17px;
+    color: var(--muted);
+  }
+  ul { padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 15px;
+    vertical-align: top;
+  }
+  th {
+    background: var(--mist);
+    color: var(--muted);
+    font-weight: 600;
+    width: 45%;
+  }
+  tr:last-child td, tr:last-child th { border-bottom: none; }
+  a { color: var(--accent); }
+  a:hover { color: var(--accent-hover); }
+  code {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.9em;
+  }
+  footer {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 60px;
+    color: var(--muted-light);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="inner">
+    <p class="brand">Utthana</p>
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: 2026-11-20</p>
+  </div>
+</header>
+<main>
+  <div class="inner">
+
+    <h2>The short version</h2>
+    <p class="lead">Utthana does not collect, transmit, sell, or share any of your data. Everything Utthana does happens entirely on your device, inside your own browser. There is no server, no account, no analytics, and no network request of any kind.</p>
+
+    <h2>What Utthana stores, and where</h2>
+    <p>Utthana stores a small amount of information using Chrome's built-in <code>chrome.storage.local</code> API — the same private, on-device storage every extension uses for its own settings. This data:</p>
+    <ul>
+      <li><strong>Never leaves your device.</strong> Utthana has no backend server to send it to, and makes no network requests at all — not for analytics, not for updates, not for anything.</li>
+      <li><strong>Is never shared, sold, or used for advertising.</strong></li>
+      <li><strong>Is visible only to you</strong>, through Utthana's own popup, settings and summary pages.</li>
+    </ul>
+
+    <p>What's stored:</p>
+    <table>
+      <tr><th>What</th><td>Why</td></tr>
+      <tr><th>Your settings (work hours, break rhythm, which activities you enable, which sites to guard)</th><td>So Utthana can apply your preferences</td></tr>
+      <tr><th>How many minutes you were active today, how many breaks you took, which activities you completed</th><td>So Utthana can show you your own daily/weekly stats</td></tr>
+      <tr><th>How long you've spent today on sites you've asked Utthana to guard (like Instagram), and how many times you closed a tab instead of continuing</th><td>So Focus Guard can show you your own usage of those sites</td></tr>
+      <tr><th>A short note you optionally type into "Quick note" before stepping away</th><td>So Utthana can show it back to you later — this is written entirely by you, never read or generated automatically</td></tr>
+      <tr><th>The date you installed Utthana</th><td>Used only to decide when to show certain one-time prompts</td></tr>
+    </table>
+
+    <p>Utthana does <strong>not</strong> collect your browsing history, the content of pages you visit, your keystrokes, your clipboard, your location, or any health or biometric data — even though Utthana is a wellness extension, it only ever counts minutes and break counts, never anything about your physical condition. Utthana makes no medical claims and does not diagnose anything.</p>
+
+    <h2>Permissions Utthana uses, and why</h2>
+    <ul>
+      <li><strong>storage</strong> — to save your settings and stats locally, as described above.</li>
+      <li><strong>alarms</strong> — to check, once a minute, whether a break is due.</li>
+      <li><strong>notifications</strong> — to show you a break reminder or a lunch/wrap-up nudge, if you've chosen notification-style breaks instead of a window.</li>
+      <li><strong>idle</strong> — to tell whether you're actively at your computer, so Utthana can count real active time and avoid nagging you while you're away.</li>
+      <li><strong>scripting</strong> — to show the Focus Guard pause screen on sites you've specifically asked it to guard (built-in ones, or ones you add yourself).</li>
+      <li><strong>Host permissions for Google Meet, Zoom, and Microsoft Teams</strong> — used only to check whether one of those tabs looks like it's in an active call, so Utthana can avoid interrupting you. Utthana never reads the content of those pages, only whether a tab matching those sites is open and (for Teams) producing audio.</li>
+      <li><strong>Optional host permission, requested per site</strong> — when you add a custom site to Focus Guard (for example, a site not in the built-in list), Chrome asks your explicit permission for that specific site before Utthana can show the pause screen there. Utthana never requests broad access up front.</li>
+    </ul>
+    <p>Utthana cannot see anything happening in the Teams/Zoom/Meet <strong>desktop apps</strong> (as opposed to a browser tab) — if you're on a call through a desktop app, use the "Pause" option in Utthana's toolbar popup.</p>
+
+    <h2>Your control over this data</h2>
+    <ul>
+      <li>Everything above can be reviewed and changed from Utthana's Settings page.</li>
+      <li>Removing a guarded site also removes Utthana's permission for it.</li>
+      <li>Uninstalling Utthana deletes all of its locally stored data — there's nothing left behind on a server, because there never was a server.</li>
+    </ul>
+
+    <h2>Changes to this policy</h2>
+    <p>If Utthana's data practices ever change, this policy will be updated and the extension's Chrome Web Store listing will reflect the update. As of this writing, that has never happened — Utthana has never sent data anywhere.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy or Utthana's privacy practices: <a href="mailto:krishna161095@gmail.com">krishna161095@gmail.com</a></p>
+
+  </div>
+</main>
+</body>
+</html>

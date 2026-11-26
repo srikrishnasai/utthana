@@ -76,4 +76,4 @@ writing, that has never happened — Utthana has never sent data anywhere.
 
 ## Contact
 
-Questions about this policy or Utthana's privacy practices: [YOUR CONTACT EMAIL — fill in before publishing]
+Questions about this policy or Utthana's privacy practices: krishna161095@gmail.com
