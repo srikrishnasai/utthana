@@ -123,13 +123,11 @@ see the note in that file.
 
 - ~~A real USPTO trademark search~~ — **done** (see "Name / trademark check"
   above).
-- **Host the privacy policy at a public URL** — in progress, 2026-11-26.
-  Decided: GitHub Pages on this repo (renamed from "Unsit" to **utthana** on
-  GitHub, made public). A standalone styled page, `docs/privacy-policy.html`,
-  is written and ready — once GitHub Pages is enabled (Settings → Pages →
-  Deploy from branch → `master` / `/docs`), it'll be live at
-  `https://srikrishnasai.github.io/utthana/privacy-policy.html`. That's the
-  URL to paste into the dashboard's privacy policy field once confirmed live.
+- ~~Host the privacy policy at a public URL~~ — **done, 2026-11-26**. Repo
+  renamed from "Unsit" to **utthana** on GitHub, made public, GitHub Pages
+  enabled on `master` / `/docs`. Confirmed live at:
+  `https://srikrishnasai.github.io/utthana/privacy-policy.html` — **this is
+  the URL to paste into the dashboard's privacy policy field.**
 - ~~Fill in the privacy policy's contact email~~ — **done**:
   krishna161095@gmail.com.
 - ~~Screenshots~~ — **done, 2026-11-26**. Five real screenshots, captured from
